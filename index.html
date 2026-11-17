@@ -24,6 +24,15 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 #st{min-height:22px;color:#7ef9ff;font-weight:800;margin-bottom:10px;line-height:1.55}#st.err{color:#ff9b9b;background:#3a1d2b;border-radius:12px;padding:10px 14px}
 .res h2{font-family:'Black Han Sans';font-weight:400;font-size:44px;margin:0 0 4px;color:#ffd60a}
 .res p{font-size:22px;font-weight:800;margin:0 0 16px}
+#gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#0d1020;padding:16px}
+#gate form{width:100%;max-width:380px;background:#151a33;border:3px solid #ffd60a;border-radius:24px;padding:28px;text-align:center}
+#gate h2{font-family:'Black Han Sans';font-weight:400;font-size:34px;margin:4px 0 6px}
+#gate p{margin:0 0 16px;opacity:.85}
+#gate input{width:100%;font:inherit;font-size:20px;text-align:center;padding:12px;border-radius:12px;border:2px solid #2a3160;background:#0d1020;color:#fff;margin-bottom:12px}
+#gate input:focus{outline:none;border-color:#ffd60a}
+#gate button{width:100%}
+#gerr{min-height:22px;color:#ff9b9b;font-weight:800;margin-top:10px}
+#gate.shake form{animation:sh .35s}@keyframes sh{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
 #snd{position:fixed;left:12px;bottom:12px;z-index:6;display:flex;gap:8px}
 #snd button{font-size:13px;padding:8px 12px;min-height:40px;background:rgba(13,16,32,.8);color:#fff;border:2px solid #ffd60a55}
 #snd button[aria-pressed=false]{opacity:.55;text-decoration:line-through}
@@ -31,6 +40,8 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 <canvas id="w"></canvas><canvas id="c"></canvas>
 <video id="v" playsinline muted autoplay style="position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"></video>
 <div id="snd"><button id="sfxB" aria-pressed="true">효과음</button><button id="bgmB" aria-pressed="true">음악</button></div>
+<div id="gate"><form id="gf" autocomplete="off"><div class="by">by Yoon.TPE</div><h2>변신 로봇 런 3D</h2><p>입장 코드를 입력해 주세요</p>
+<input id="gi" type="password" inputmode="text" aria-label="입장 코드" placeholder="코드 입력" autofocus><button class="go" type="submit">입장하기</button><div id="gerr" role="alert"></div></form></div>
 <div id="menu"><div class="card">
 <div class="by">by Yoon.TPE</div>
 <div id="res"></div>
@@ -51,6 +62,12 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 키보드: 1P W 점프 · S 숙이기 · D 펀치 · E 포즈 · Q 터치 / 2P ↑ · ↓ · ← · / · . / M 소리 끄기</p>
 </div></div>
 <script>
+{const gate=document.getElementById('gate'),gi=document.getElementById('gi');
+ let ok=false;try{ok=sessionStorage.getItem('rr-in')==='1'}catch(e){}
+ if(ok)gate.remove();
+ else document.getElementById('gf').addEventListener('submit',e=>{e.preventDefault();
+  if(gi.value.trim().toLowerCase()==='dsms'){try{sessionStorage.setItem('rr-in','1')}catch(e){}gate.remove()}
+  else{document.getElementById('gerr').textContent='코드가 맞지 않아요. 다시 입력해 주세요.';gate.classList.remove('shake');void gate.offsetWidth;gate.classList.add('shake');gi.select()}})}
 {
 const c3=document.getElementById('w'),cv=document.getElementById('c'),g=cv.getContext('2d'),vid=document.getElementById('v'),menu=document.getElementById('menu'),st=document.getElementById('st'),res=document.getElementById('res');
 const HAS3D=!!window.THREE;
