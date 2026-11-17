@@ -105,6 +105,9 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
 #run .rmeter i{display:block;height:100%;width:0;background:#3fae5a;transition:width .15s}
 #r-pbar{position:absolute;left:0;right:0;bottom:14px;display:none;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 8px}
 #r-pbar.on{display:flex}
+#r-pbar .pk{display:none;font-size:20px;padding:10px 18px}
+#r-pbar.punch button{display:none}
+#r-pbar.punch .pk{display:block}
 #r-pbar button,#r-quit{font:inherit;font-size:17px;border:3px solid #3a2a17;border-radius:16px;background:#fff;color:#3a2a17;padding:8px 10px;min-height:48px;box-shadow:0 3px 0 #3a2a17;cursor:pointer}
 #r-quit{position:absolute;left:12px;bottom:78px;border-radius:999px;font-size:15px;opacity:.9}
 #r-mus{position:absolute;right:12px;bottom:78px;font:inherit;font-size:15px;border:3px solid #3a2a17;border-radius:999px;background:#fff;color:#3a2a17;padding:8px 12px;min-height:48px;box-shadow:0 3px 0 #3a2a17;cursor:pointer;opacity:.9}
@@ -255,7 +258,7 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
       <button id="r-quit">그만하기</button>
       <button id="r-mus" aria-pressed="true">🎵 음악 켜짐</button>
       <div id="r-pbar" aria-label="동작 고르기">
-        <button data-p="up">만세</button><button data-p="T">비행기</button><button data-p="L">왼손</button><button data-p="R">오른손</button><button data-p="clap">박수</button>
+        <button data-p="up">만세</button><button data-p="T">비행기</button><button data-p="L">왼손</button><button data-p="R">오른손</button><button data-p="clap">박수</button><button class="pk" data-k="L">👊 왼주먹</button><button class="pk" data-k="R">오른주먹 👊</button>
       </div>
     </div>
   </section>
@@ -525,7 +528,7 @@ function say(t,force){const now=performance.now();if(!force&&now-lastSay<1300)re
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';if(voice)u.voice=voice;u.rate=1;u.pitch=1.25;speechSynthesis.speak(u)}catch(e){}}
 let ac=null;
 function tone(kind){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
-  const N={good:[660,880],win:[523,659,784,1046],pop:[1000],jump:[400,620],bad:[240,170]}[kind]||[600];
+  const N={good:[660,880],win:[523,659,784,1046],pop:[1000],jump:[400,620],bad:[240,170],punch:[220,110],crash:[300,200,120,80]}[kind]||[600];
   N.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type=kind==='bad'?'triangle':'sine';o.frequency.value=f;const t=ac.currentTime+i*.09;
     g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.22,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.22)})}catch(e){}}
 
@@ -556,16 +559,17 @@ function musLabel(){const b=document.getElementById('r-mus');if(b){b.textContent
 /* ---------- 몸 인식 ---------- */
 const MP='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const MODEL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
-const ARMS={none:[[-.35,1],[.35,1]],up:[[-.55,-1.1],[.55,-1.1]],T:[[-1.2,0],[1.2,0]],L:[[-.45,-1.15],[.35,1]],R:[[-.35,1],[.45,-1.15]],clap:[[.5,.3],[-.5,.3]]};
+const ARMS={none:[[-.35,1],[.35,1]],up:[[-.55,-1.1],[.55,-1.1]],T:[[-1.2,0],[1.2,0]],L:[[-.45,-1.15],[.35,1]],R:[[-.35,1],[.45,-1.15]],clap:[[.5,.3],[-.5,.3]],pL:[[1.1,-.4],[.35,1]],pR:[[-.35,1],[-1.1,-.4]]};
 const POSES={up:'만세!',T:'비행기 날개 쫙!',L:'왼손 번쩍!',R:'오른손 번쩍!'};
 let landmarker=null,useCam=false,lastDet=0,base=null,wasUp=false,wasClap=false;
+const punchSt={L:{ext:false,last:0},R:{ext:false,last:0}};
 const body={present:false,lane:0,duck:false,pose:'none',arms:null,pts:null,sy:0,sw:100};
 const fake={p:'none',t:0};
 
 function procPose(L){
   if(!L){body.present=false;body.pts=null;return}
   const vw=video.videoWidth,vh=video.videoHeight;
-  const P=i=>({x:(1-L[i].x)*vw,y:L[i].y*vh,v:L[i].visibility??1});
+  const P=i=>({x:(1-L[i].x)*vw,y:L[i].y*vh,z:(L[i].z||0)*vw,v:L[i].visibility??1});
   const N=P(0),LS=P(11),RS=P(12),LW=P(15),RW=P(16),LE=P(13),RE=P(14),E7=P(7),E8=P(8);
   body.pts={N,LS,RS,LW,RW,LE,RE,E7,E8,vw,vh};
   body.present=LS.v>.5&&RS.v>.5;
@@ -586,6 +590,11 @@ function procPose(L){
   if(clap&&!wasClap)onEvent('clap');wasClap=clap;
   const arm=(w,s,d)=>ok(w)?[(w.x-s.x)/sw,(w.y-s.y)/sw]:d;
   body.arms=[arm(LW,LS,ARMS.none[0]),arm(RW,RS,ARMS.none[1])];
+  const now=performance.now()/1000;
+  [['L',LW,LS],['R',RW,RS]].forEach(([h,w,sh])=>{const st=punchSt[h];if(!ok(w)){st.ext=false;return}
+    const rx=(w.x-sh.x)/sw,ry=(w.y-sh.y)/sw,d2=Math.hypot(rx,ry),fz=(w.z-sh.z)/sw,high=ry>-1.3&&ry<1.1;
+    const ext=st.ext?high&&(d2>.95||fz<-.8):high&&(d2>1.15||fz<-1.1);
+    if(ext&&!st.ext&&now-st.last>.28){st.last=now;onPunch(h)}st.ext=ext});
   if(base!=null){
     const isUp=base-sy>.3*sw,isDuck=sy-base>.5*sw;
     if(isUp&&!wasUp)doJump();
@@ -594,7 +603,7 @@ function procPose(L){
   }
 }
 const curPose=()=>useCam?body.pose:(fake.t>0?fake.p:'none');
-const curArms=()=>useCam&&body.present&&body.arms?body.arms:(ARMS[curPose()]||ARMS.none);
+const curArms=()=>{const a=(useCam&&body.present&&body.arms?body.arms:(ARMS[curPose()]||ARMS.none)).slice();if(player.punch&&player.punch.t>0){if(player.punch.h==='L')a[0]=[1.1,-.55];else a[1]=[-1.1,-.55]}return a};
 
 async function startCam(){
   const err=$('#r-err');err.style.display='none';
@@ -651,15 +660,15 @@ function calib(dt){
 
 /* ---------- 게임 상태 ---------- */
 const JUMP=.9,WALLSPD=.22;
-const MISSIONS=[{key:'clap',text:'박수 짝짝짝!',need:3},{key:'jump',text:'제자리 점프 2번!',need:2},{key:'up',text:'만세!',pose:1},{key:'T',text:'비행기 날개 쫙!',pose:1},{key:'L',text:'왼손 번쩍!',pose:1},{key:'R',text:'오른손 번쩍!',pose:1}];
+const MISSIONS=[{key:'punch',text:'번갈아 펀치 4번!',need:4},{key:'clap',text:'박수 짝짝짝!',need:3},{key:'jump',text:'제자리 점프 2번!',need:2},{key:'up',text:'만세!',pose:1},{key:'T',text:'비행기 날개 쫙!',pose:1},{key:'L',text:'왼손 번쩍!',pose:1},{key:'R',text:'오른손 번쩍!',pose:1}];
 let state='menu',t=0,dist=0,score=0,hearts=3,inv=0,shake=0,speed=.25;
 const player={lane:0,x:0,jumpT:0,duckT:0,duck:false};
-let objs=[],toasts=[],nextSpawn=2,nextTree=0,nextWall=18,nextMission=9,mission=null,wallWarn=null,best=0;
+let objs=[],toasts=[],parts=[],nextSpawn=2,nextTree=0,nextWall=18,nextMission=9,nextCrate=30,mission=null,wallWarn=null,best=0;
 try{best=+localStorage.getItem('bodyRunBest')||0}catch(e){}
 
 function startGame(){
   t=0;score=0;hearts=3;inv=0;shake=0;objs=objs.filter(o=>o.type==='tree');toasts=[];mission=null;wallWarn=null;
-  nextSpawn=2.2;nextWall=18;nextMission=9;player.lane=0;player.jumpT=0;player.duckT=0;
+  nextSpawn=2.2;nextWall=18;nextMission=9;nextCrate=30;parts=[];player.punch=null;player.lane=0;player.jumpT=0;player.duckT=0;
   ['start','calib','over'].forEach(id=>$('#r-'+id).classList.remove('on'));
   state='play';tone('win');say('출발!',true);musicStart();
 }
@@ -684,7 +693,16 @@ function spawnPattern(){
   else if(r<.72)objs.push({type:'puddle',lane:L(),d:1.25});
   else{const a=L();for(let i=0;i<3;i++)objs.push({type:'coin',lane:a,d:1.25+i*.12})}
 }
+const CRATE_HP=6;
+function burst(x,y,n,big){for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*(big?520:260),vy:-Math.random()*(big?520:300),t:.9,r:(big?10:6)+Math.random()*8,c:['#c98a4b','#a96d33','#ffd23f'][i%3],a:Math.random()*6})}
+function onPunch(h){player.punch={h,t:.28};if(state!=='play')return;onEvent('punch');
+  const c=objs.find(o=>o.type==='crate'&&!o.broken&&o.d>0&&o.d<.95),px=W/2+(h==='L'?-1:1)*W*.12;
+  if(!c){tone('pop');return}
+  if(c.last===h){toast(h==='L'?'이번엔 오른손!':'이번엔 왼손!',W/2,H*.44,'#ffd23f');say(h==='L'?'오른손!':'왼손!');return}
+  c.last=h;c.hp--;c.hit=.15;score+=5;tone('punch');const p=P(0,c.d);burst(p.x+(h==='L'?-1:1)*40*S0*p.k,p.y-90*S0*p.k,5);toast('퍽!',px,H*.5,'#fff');
+  if(c.hp<=0){c.broken=true;score+=100;tone('crash');burst(p.x,p.y-80*S0*p.k,26,1);shake=.35;toast('와장창! +100',W/2,H*.4,'#ffd23f');say('와장창! 최고야!',true)}}
 function collide(o){
+  if(o.type==='crate'){if(!o.broken)hit('주먹으로 부숴요');return}
   const same=o.lane===pLane(),air=player.jumpT>0;
   if(o.type==='coin'){if(same){score+=10;toast('+10',W/2+pLane()*W*.3,H*.7,'#ffd23f');tone('pop')}return}
   if(o.type==='wall'){if(o.pass){score+=100;toast('+100 통과!',W/2,H*.45,'#7bd389');tone('win');say('통과! 최고야!',true)}else hit('똑같이 따라 해요');return}
@@ -705,16 +723,19 @@ function update(dt){
   if(player.jumpT>0)player.jumpT-=dt;
   if(player.duckT>0)player.duckT-=dt;
   player.duck=(useCam?body.duck:player.duckT>0)&&player.jumpT<=0;
-  for(const o of objs)o.d-=(o.type==='wall'?WALLSPD:speed)*dt;
+  for(const o of objs)o.d-=(o.type==='wall'?WALLSPD:o.type==='crate'?.17:speed)*dt;
+  if(player.punch)player.punch.t-=dt;
   if(playing){
     t+=dt;score+=dt*speed*30;if(inv>0)inv-=dt;
-    const wall=objs.find(o=>o.type==='wall'),busy=!!(wallWarn||wall);
+    const wall=objs.find(o=>o.type==='wall'),crate=objs.find(o=>o.type==='crate'&&!o.done),busy=!!(wallWarn||wall||crate);
     nextSpawn-=dt;
     if(nextSpawn<=0&&!busy){spawnPattern();nextSpawn=Math.max(1.15,2.2-t/120)+Math.random()*.6}
     nextWall-=dt;
     if(nextWall<=0&&!busy&&!mission){const ks=Object.keys(POSES);wallWarn={pose:ks[Math.random()*ks.length|0],t:2.8};
       say('큰 벽이 와요! '+POSES[wallWarn.pose].replace('!','')+' 따라 해요!',true);nextWall=22+Math.random()*8}
     if(wallWarn){wallWarn.t-=dt;if(wallWarn.t<=0){objs.push({type:'wall',lane:0,d:1,pose:wallWarn.pose,hold:0,pass:false});wallWarn=null}}
+    nextCrate-=dt;
+    if(nextCrate<=0&&!busy&&!mission){objs.push({type:'crate',lane:0,d:1.05,hp:CRATE_HP,last:null,broken:false,hit:0});say('상자 더미가 와요! 왼손 오른손 번갈아 펀치!',true);nextCrate=26+Math.random()*8}
     nextMission-=dt;
     if(nextMission<=0&&!busy&&!mission){const m=MISSIONS[Math.random()*MISSIONS.length|0];mission={...m,cnt:0,hold:0,t:6,T:6};say('보너스! '+m.text.replace('!',''),true);nextMission=14+Math.random()*8}
     if(mission){mission.t-=dt;
@@ -729,10 +750,13 @@ function update(dt){
     }
   }
   objs=objs.filter(o=>o.d>-.2);
+  for(const o of objs)if(o.hit>0)o.hit-=dt;
+  for(const q of parts){q.t-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=900*dt;q.a+=dt*8}parts=parts.filter(q=>q.t>0);
   for(const x of toasts)x.t-=dt;toasts=toasts.filter(x=>x.t>0);
   if(shake>0)shake-=dt;
-  const needBar=!useCam&&playing&&(wallWarn||objs.some(o=>o.type==='wall'&&!o.pass)||(mission&&(mission.pose||mission.key==='clap')));
-  $('#r-pbar').classList.toggle('on',!!needBar);
+  const needPunch=!useCam&&playing&&(objs.some(o=>o.type==='crate'&&!o.broken&&!o.done)||(mission&&mission.key==='punch'));
+  const needBar=!useCam&&playing&&!needPunch&&(wallWarn||objs.some(o=>o.type==='wall'&&!o.pass)||(mission&&(mission.pose||mission.key==='clap')));
+  $('#r-pbar').classList.toggle('on',!!(needBar||needPunch));$('#r-pbar').classList.toggle('punch',!!needPunch);
 }
 
 /* ---------- 그리기 ---------- */
@@ -774,7 +798,7 @@ function bunny(x,g,s,duck,jh,arms){
   [-1,1].forEach((k,i)=>{const v=arms[i];let n=Math.hypot(v[0],v[1])||1;const len=Math.min(1.4,Math.max(.6,n));
     const sx=x+k*20*s,ex=sx+v[0]/n*len*22*s,ey=shY+v[1]/n*len*22*s;
     ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=12*s;ctx.beginPath();ctx.moveTo(sx,shY);ctx.lineTo(ex,ey);ctx.stroke();
-    ctx.strokeStyle='#fff';ctx.lineWidth=7*s;ctx.stroke();ell(ex,ey,6*s,6*s,0,'#fff',INK,2.5*s)});
+    ctx.strokeStyle='#fff';ctx.lineWidth=7*s;ctx.stroke();const pk=player.punch&&player.punch.t>0&&player.punch.h===(i?'R':'L');ell(ex,ey,(pk?11:6)*s,(pk?11:6)*s,0,'#fff',INK,2.5*s);if(pk){star(ex+(i?-1:1)*14*s,ey-8*s,9*s,0);ctx.fillStyle='#ffd23f';ctx.fill();ctx.lineWidth=2*s;ctx.strokeStyle=INK;ctx.stroke()}});
 }
 
 function drawObj(o){
@@ -801,6 +825,14 @@ function drawObj(o){
     figure(p.x,p.y-8*s,175*s,o.pose,INK,30*s);figure(p.x,p.y-8*s,175*s,o.pose,'#bfe9ff',23*s);
     ctx.globalAlpha=1;
     txt(o.pass?'통과!':POSES[o.pose],p.x,top-20*s,Math.max(14,30*s),o.pass?'#7bd389':'#ffd23f');}
+  if(o.type==='crate'&&!o.broken){const sx=o.hit>0?(Math.random()-.5)*10*s:0,bw=62*s,cols=[-1.5,-.5,.5,1.5],rows=3,dmg=1-o.hp/CRATE_HP;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols.length-(r===2?2:0);c++){const cx=p.x+sx+(r===2?cols[c+1]:cols[c])*bw,by=p.y-(r+1)*bw;
+      ctx.fillStyle='#d9a066';ctx.fillRect(cx-bw/2,by,bw,bw);ctx.strokeStyle=INK;ctx.lineWidth=3*s;ctx.strokeRect(cx-bw/2,by,bw,bw);
+      ctx.strokeStyle='#a96d33';ctx.lineWidth=5*s;ctx.beginPath();ctx.moveTo(cx-bw/2+6*s,by+6*s);ctx.lineTo(cx+bw/2-6*s,by+bw-6*s);ctx.moveTo(cx+bw/2-6*s,by+6*s);ctx.lineTo(cx-bw/2+6*s,by+bw-6*s);ctx.stroke();
+      if(dmg>(r*4+c)/12){ctx.strokeStyle=INK;ctx.lineWidth=2.5*s;ctx.beginPath();ctx.moveTo(cx-10*s,by+8*s);ctx.lineTo(cx,by+24*s);ctx.lineTo(cx-6*s,by+34*s);ctx.lineTo(cx+8*s,by+48*s);ctx.stroke()}}
+    rr(p.x-70*s,p.y-3*bw-44*s,140*s,16*s,8*s);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.5*s;ctx.stroke();
+    rr(p.x-70*s,p.y-3*bw-44*s,140*s*(o.hp/CRATE_HP),16*s,8*s);ctx.fillStyle='#ff6b4a';ctx.fill();
+    txt('펀치!',p.x,p.y-3*bw-66*s,Math.max(14,28*s),'#ffd23f')}
 }
 
 function banner(title,sub,pose,frac,col){
@@ -836,6 +868,7 @@ function draw(){
   for(const o of sorted)if(o.d<=0)drawObj(o);
   if(state==='play'||state==='over')hud();
   if(useCam&&state!=='menu')preview();
+  for(const q of parts){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.a);ctx.globalAlpha=Math.min(1,q.t*2);ctx.fillStyle=q.c;ctx.fillRect(-q.r/2,-q.r/2,q.r,q.r*.6);ctx.strokeStyle=INK;ctx.lineWidth=1.5;ctx.strokeRect(-q.r/2,-q.r/2,q.r,q.r*.6);ctx.restore()}
   for(const x of toasts)txt(x.text,x.x,x.y-(1.2-x.t)*60,Math.round(H*.045),x.c);
 }
 
@@ -848,7 +881,9 @@ function hud(){
   const wall=objs.find(o=>o.type==='wall'&&!o.pass&&o.d>0);
   if(wallWarn)banner('큰 벽이 와요!',POSES[wallWarn.pose]+' 똑같이 따라 해요',wallWarn.pose,null,'#e2725b');
   else if(wall)banner(POSES[wall.pose],wall.d<.8?'그대로 멈춰요!':'준비…',wall.pose,wall.hold/.45,'#e2725b');
-  else if(mission)banner('보너스 '+mission.text,mission.pose?'따라 하면 +50점':`${mission.cnt} / ${mission.need}  ·  +50점`,mission.pose?mission.key:(mission.key==='clap'?'clap':'up'),mission.t/mission.T);
+  else if(objs.some(o=>o.type==='crate'&&!o.broken&&o.d>0)){const c=objs.find(o=>o.type==='crate'&&!o.broken&&o.d>0),nx=c.last==='L'?'R':c.last==='R'?'L':null;
+    banner('주먹 펀치로 와장창!',nx?`이번엔 ${nx==='L'?'왼손':'오른손'}! · 남은 상자 ${c.hp}`:`왼손 오른손 번갈아! · 남은 상자 ${c.hp}`,nx==='R'?'pR':'pL',1-c.hp/CRATE_HP,'#c98a4b')}
+  else if(mission)banner('보너스 '+mission.text,mission.pose?'따라 하면 +50점':`${mission.cnt} / ${mission.need}  ·  +50점`,mission.pose?mission.key:(mission.key==='clap'?'clap':mission.key==='punch'?'pL':'up'),mission.t/mission.T);
   if(useCam&&state==='play'&&!body.present)txt('몸이 안 보여요! 뒤로 가 주세요',W/2,H*.93,Math.round(H*.032),'#ffd23f');
 }
 
@@ -869,12 +904,14 @@ $('#r-bCam').onclick=()=>{tone('pop');startCam()};
 $('#r-bKey').onclick=()=>{tone('pop');useCam=false;startGame();say('출발! 화살표나 손가락으로 움직여요',true)};
 $('#r-bAgain').onclick=()=>{if(useCam&&base!=null)startGame();else if(useCam)startCam();else startGame()};
 $('#r-bHome').onclick=()=>toMenu();
-$('#r-pbar').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;fake.p=b.dataset.p;fake.t=.9;tone('pop');if(b.dataset.p==='clap')onEvent('clap')});
+$('#r-pbar').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.k){onPunch(b.dataset.k);return}fake.p=b.dataset.p;fake.t=.9;tone('pop');if(b.dataset.p==='clap')onEvent('clap')});
 window.addEventListener('keydown',e=>{if(state!=='play'||useCam||location.hash!=='#run')return;
   if(e.key==='ArrowLeft')player.lane=Math.max(-1,player.lane-1);
   else if(e.key==='ArrowRight')player.lane=Math.min(1,player.lane+1);
   else if(e.key==='ArrowUp'||e.key===' ')doJump();
   else if(e.key==='ArrowDown')player.duckT=.9;
+  else if(e.key==='z'||e.key==='Z')onPunch('L');
+  else if(e.key==='x'||e.key==='X')onPunch('R');
   else{const p={'1':'up','2':'T','3':'L','4':'R','5':'clap'}[e.key];if(p){fake.p=p;fake.t=.9;if(p==='clap')onEvent('clap')}}
   if(e.key.startsWith('Arrow')||e.key===' ')e.preventDefault()});
 let sw0=null;
