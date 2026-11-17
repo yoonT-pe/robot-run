@@ -467,7 +467,7 @@ const pLane=()=>Math.round(player.x);
 function spawnPattern(){
   const L=()=>[-1,0,1][Math.random()*3|0],r=Math.random();
   if(t<12&&r>=.35&&r<.55)return spawnPattern();
-  if(r<.35){const a=L();objs.push({type:'rock',lane:a,d:1.25});if(t>40&&Math.random()<.4){let b;do b=L();while(b===a);objs.push({type:'rock',lane:b,d:1.25})}}
+  if(r<.35)objs.push({type:'rock',lane:0,d:1.25});
   else if(r<.55)objs.push({type:'bar',lane:0,d:1.25});
   else if(r<.72)objs.push({type:'puddle',lane:L(),d:1.25});
   else{const a=L();for(let i=0;i<3;i++)objs.push({type:'coin',lane:a,d:1.25+i*.12})}
@@ -477,7 +477,8 @@ function collide(o){
   if(o.type==='coin'){if(same){score+=10;toast('+10',W/2+pLane()*W*.3,H*.7,'#ffd23f');tone('pop')}return}
   if(o.type==='wall'){if(o.pass){score+=100;toast('+100 통과!',W/2,H*.45,'#7bd389');tone('win');say('통과! 최고야!',true)}else hit('똑같이 따라 해요');return}
   if(o.type==='bar'){if(!player.duck)hit('숙여요');else{score+=5;toast('잘 숙였어!',W/2,H*.62)}return}
-  if(same){if(!air)hit(o.type==='rock'?'점프해요':'옆으로 피해요');else{score+=5;toast('폴짝!',W/2+pLane()*W*.3,H*.6)}}
+  if(o.type==='rock'){if(!air)hit('점프해요');else{score+=5;toast('폴짝!',W/2,H*.6)}return}
+  if(same){if(!air)hit('옆으로 피해요');else{score+=5;toast('폴짝!',W/2+pLane()*W*.3,H*.6)}}
 }
 
 function update(dt){
@@ -511,7 +512,7 @@ function update(dt){
       if(wall.hold>=.45){wall.pass=true;tone('good');say('좋아요! 그대로!',true)}}
     for(const o of objs){
       if(!o.warned&&o.d<.55&&o.d>0){o.warned=1;
-        if(o.type==='bar')say('숙여!');else if(o.type==='rock'&&o.lane===player.lane)say('점프!');else if(o.type==='puddle'&&o.lane===player.lane)say('옆으로!')}
+        if(o.type==='bar')say('숙여!');else if(o.type==='rock')say('점프!');else if(o.type==='puddle'&&o.lane===player.lane)say('옆으로!')}
       if(!o.done&&o.d<=0&&o.type!=='tree'){o.done=true;collide(o)}
     }
   }
@@ -565,9 +566,9 @@ function drawObj(o){
   const p=P(o.lane,o.d),s=S0*p.k;
   if(o.type==='tree'){ctx.fillStyle='#8a5a2b';ctx.fillRect(p.x-6*s,p.y-50*s,12*s,50*s);
     ell(p.x,p.y-70*s,(34+o.k*12)*s,(38+o.k*10)*s,0,o.k>.5?'#3fae5a':'#4cc06a',INK,2.5*s);ell(p.x-10*s,p.y-82*s,10*s,8*s,0,'#7bd389');return}
-  if(o.type==='rock'){ell(p.x,p.y,40*s,8*s,0,'#0002');ctx.beginPath();ctx.moveTo(p.x-38*s,p.y);ctx.quadraticCurveTo(p.x-40*s,p.y-38*s,p.x-6*s,p.y-44*s);
-    ctx.quadraticCurveTo(p.x+36*s,p.y-44*s,p.x+38*s,p.y);ctx.closePath();ctx.fillStyle='#9aa3ad';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=3*s;ctx.stroke();
-    ell(p.x-12*s,p.y-30*s,10*s,5*s,-.3,'#c3cad1');if(o.d<.85&&o.d>.08)txt('점프!',p.x,p.y-62*s,Math.max(12,22*s),'#ffd23f');return}
+  if(o.type==='rock'){for(const l of [-1,0,1]){const q=P(l,o.d);ell(q.x,q.y,40*s,8*s,0,'#0002');ctx.beginPath();ctx.moveTo(q.x-38*s,q.y);ctx.quadraticCurveTo(q.x-40*s,q.y-38*s,q.x-6*s,q.y-44*s);
+    ctx.quadraticCurveTo(q.x+36*s,q.y-44*s,q.x+38*s,q.y);ctx.closePath();ctx.fillStyle='#9aa3ad';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=3*s;ctx.stroke();
+    ell(q.x-12*s,q.y-30*s,10*s,5*s,-.3,'#c3cad1')}if(o.d<.85&&o.d>.08)txt('점프!',p.x,p.y-62*s,Math.max(12,24*s),'#ffd23f');return}
   if(o.type==='puddle'){ell(p.x,p.y-2*s,46*s,11*s,0,'#4fb3e8',INK,2.5*s);ell(p.x-12*s,p.y-4*s,12*s,3*s,0,'#bfe6fb');
     if(o.d<.85&&o.d>.08)txt('피해요!',p.x,p.y-30*s,Math.max(12,20*s),'#bfe6fb');return}
   if(o.type==='coin'){const b=Math.sin(dist*25+o.d*20)*4*s;star(p.x,p.y-42*s+b,16*s,dist*3);ctx.fillStyle='#ffd23f';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.5*s;ctx.stroke();return}
