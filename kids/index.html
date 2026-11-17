@@ -111,16 +111,39 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
 #r-start.on~#r-quit,#r-over.on~#r-quit,#r-calib.on~#r-quit,#r-face.on~#r-quit,#r-start.on~#r-mus,#r-over.on~#r-mus,#r-calib.on~#r-mus,#r-face.on~#r-mus{display:none}
 #r-fc{width:min(190px,48vw);height:auto;aspect-ratio:1;border-radius:50%;border:4px solid #3a2a17;display:block;margin:10px auto 4px;background:#dff2ff}
 #run .rbtn[hidden]{display:none}
+/* 모현 · 분수 */
+.cat{font-size:26px;font-weight:400;margin:26px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cat:first-child{margin-top:6px}
+.cat small{font-size:16px;color:var(--soft)}
+.t6{background:#9fe3d0;color:#3a2a17;grid-column:1/-1}
+.seg{flex-wrap:wrap;border-radius:26px}
+.fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1;vertical-align:middle;margin:0 .12em}
+.fr b{font-weight:400}.fr i{display:block;width:100%;min-width:.9em;height:max(3px,.08em);background:currentColor;margin:.08em 0;border-radius:2px}
+#fBoard .ask{font-size:clamp(21px,3.8vw,30px);line-height:1.35}
+#fBoard .ask b{color:var(--coral);font-weight:400}
+.ffig{display:flex;justify-content:center;margin:0 auto 16px;max-width:340px}
+.ffig:empty{display:none}
+.ffig svg{width:100%;height:auto;max-height:210px}
+.cell{cursor:pointer}
+#fBoard .ch .fr{font-size:clamp(34px,8vw,46px)}
+#fBoard .ch.cmp{gap:8px;padding:12px}
+#fBoard .ch.cmp svg{width:100%}
+#fBoard .ch svg{width:100%;max-width:230px}
+.fexp{display:none;border:3px solid var(--line);border-radius:18px;padding:12px 16px;margin:16px auto 0;max-width:640px;font-size:18px;line-height:1.6;color:#3a2a17}
+.fexp.on{display:block}.fexp.good{background:#d8f5c8}.fexp.bad{background:#ffe1d6}
+.fexp .fr{font-size:22px}
+.fnext{display:block;margin:14px auto 0}
+.fnext[hidden]{display:none}
 /* 더하기 · 로봇 */
 .sum{font-size:clamp(56px,14vw,104px);line-height:1;text-align:center;margin:4px 0 8px;letter-spacing:2px}
 .sum b{font-weight:400;color:var(--coral)}
 .hint{text-align:center;color:var(--soft);margin:0 0 18px;font-size:18px}
 .hint i{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--sky);border:2px solid var(--line);margin:0 2px;vertical-align:-2px}
-.robot{position:fixed;left:50%;bottom:-10px;z-index:8;width:min(240px,62vw);transform:translate(-50%,115%);transition:transform .45s cubic-bezier(.3,1.5,.6,1);pointer-events:none;text-align:center}
-.robot.on{transform:translate(-50%,0)}
+.robot{position:fixed;right:max(8px,calc(50vw - 560px));bottom:-10px;z-index:8;width:min(180px,42vw);transform:translateY(115%);transition:transform .45s cubic-bezier(.3,1.5,.6,1);pointer-events:none;text-align:center}
+.robot.on{transform:translateY(0)}
 .robot svg{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 0 #0003)}
 .robot.on svg{animation:wiggle .6s .35s}
-.bubble{display:inline-block;background:#fff;color:#3a2a17;border:4px solid #3a2a17;border-radius:24px;padding:8px 20px;font-size:clamp(28px,7vw,38px);margin:0 0 6px;box-shadow:0 5px 0 #3a2a17;position:relative}
+.bubble{display:inline-block;white-space:nowrap;background:#fff;color:#3a2a17;border:4px solid #3a2a17;border-radius:24px;padding:6px 16px;font-size:clamp(20px,5vw,30px);margin:0 0 6px;box-shadow:0 5px 0 #3a2a17;position:relative}
 @keyframes wiggle{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
 /* 칭찬 */
 .yay{position:fixed;inset:0;display:none;place-items:center;background:#0008;z-index:9;padding:16px}
@@ -144,12 +167,17 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
 </header>
 <main>
   <section id="menu" class="game on">
+    <h2 class="cat">4~5살 놀이</h2>
     <div class="menu">
       <button class="tile t1" data-go="match"><b>짝꿍 찾기</b><span>뒤집어서 똑같은 동물 친구를 찾아요</span><em class="art">🐻</em></button>
       <button class="tile t2" data-go="count"><b>숫자 · 한글</b><span>과일을 세고, 더하기와 첫 글자 찾기</span><em class="art">🍎</em></button>
       <button class="tile t3" data-go="color"><b>색깔 · 모양</b><span>말하는 색깔과 모양을 골라요</span><em class="art">⭐</em></button>
       <button class="tile t4" data-go="habit"><b>양치 · 정리</b><span>세균을 닦고 장난감을 치워요</span><em class="art">🪥</em></button>
       <button class="tile t5" data-go="run"><b>몸으로 달려라!</b><span>카메라 앞에서 뛰고, 숙이고, 따라 하며 달려요</span><em class="art">🐰</em></button>
+    </div>
+    <h2 class="cat">모현 <small>초등 2학년 공부방</small></h2>
+    <div class="menu">
+      <button class="tile t6" data-go="frac"><b>수학</b><span>분수 — 똑같이 나누고, 색칠하고, 크기를 비교해요</span><em class="art">🍕</em></button>
     </div>
     <p class="note">소리로 문제를 읽어 줘요. 볼륨을 켜 주세요. 모은 별은 이 기기에만 저장돼요.</p>
   </section>
@@ -176,6 +204,12 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
     <div class="bar"><button class="back" data-go="">← 처음으로</button>
       <div class="seg" id="hMode"><button data-v="brush" aria-pressed="true">이 닦기</button><button data-v="tidy" aria-pressed="false">장난감 정리</button></div></div>
     <div class="board" id="hBoard"></div>
+  </section>
+
+  <section id="frac" class="game">
+    <div class="bar"><button class="back" data-go="">← 처음으로</button>
+      <div class="seg" id="fMode"><button data-v="mix" aria-pressed="true">골고루</button><button data-v="read" aria-pressed="false">분수 읽기</button><button data-v="paint" aria-pressed="false">색칠하기</button><button data-v="compare" aria-pressed="false">비교 · 생활</button></div></div>
+    <div class="board" id="fBoard"></div>
   </section>
 
   <section id="run" class="game">
@@ -282,7 +316,7 @@ $('#again').onclick=()=>{$('#yay').classList.remove('on');again()};
 
 /* 화면 이동 */
 const starts={};
-function route(){const h=location.hash.slice(1);const id=['match','count','color','habit','run'].includes(h)?h:'menu';
+function route(){const h=location.hash.slice(1);const id=['match','count','color','habit','run','frac'].includes(h)?h:'menu';
   $$('.game').forEach(g=>g.classList.toggle('on',g.id===id));$('#yay').classList.remove('on');if(starts[id])starts[id]();scrollTo(0,0)}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;const g=b.dataset.go;
   if(('#'+g)===location.hash||(!g&&!location.hash))route();else location.hash=g});
@@ -396,6 +430,81 @@ function startHabit(){clearTimeout(spawnT);const B=$('#hBoard');
       el.style.transform=`translate(${b.left+b.width/2-r.left-r.width/2}px,${b.top+b.height/2-r.top-r.height/2}px) scale(.4)`;el.style.opacity='0';tone('pop');left--;
       speak(left?`${el.dataset.n} 쏙!`:'');if(!left)setTimeout(()=>win('방이 깨끗해졌어요!',startHabit),700)})}}
 starts.habit=startHabit;
+
+/* 6. 모현 · 수학(분수) */
+const FR=(k,n)=>`<span class="fr"><b>${k}</b><i></i><b>${n}</b></span>`;
+const FRS=(k,n)=>`${n}분의 ${k}`;
+const SH='#ff8a5c',EMP='#fffaf0',LN='#3a2a17';
+const keys=k=>[...Array(k).keys()];
+function pie(n,sh,r,angles,click){r=r||70;const c=r+6;let a0=-Math.PI/2,out='';const parts=angles||Array(n).fill(1/n);
+  parts.forEach((p,i)=>{const a1=a0+p*2*Math.PI,x0=c+r*Math.cos(a0),y0=c+r*Math.sin(a0),x1=c+r*Math.cos(a1),y1=c+r*Math.sin(a1);
+    out+=`<path ${click?`class="cell" data-i="${i}"`:''} d="M${c} ${c}L${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${p>.5?1:0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}Z" fill="${sh.includes(i)?SH:EMP}" stroke="${LN}" stroke-width="4" stroke-linejoin="round"/>`;a0=a1});
+  return `<svg viewBox="0 0 ${2*c} ${2*c}" aria-hidden="true">${out}</svg>`}
+function bar(n,sh,widths,click){const W=280;let x=6,out='';(widths||Array(n).fill(1/n)).forEach((p,i)=>{const w=p*W;
+    out+=`<rect ${click?`class="cell" data-i="${i}"`:''} x="${x.toFixed(1)}" y="6" width="${w.toFixed(1)}" height="70" fill="${sh.includes(i)?SH:EMP}" stroke="${LN}" stroke-width="4"/>`;x+=w});
+  return `<svg viewBox="0 0 292 82" aria-hidden="true">${out}</svg>`}
+function uneq(n){let w;do{w=Array.from({length:n},()=>.4+Math.random());const t=w.reduce((a,b)=>a+b);w=w.map(x=>x/t)}while(Math.max(...w)-Math.min(...w)<.28);return w}
+function fracChoices(k,n){const seen=new Set([k+'/'+n]),out=[[k,n,true]];
+  for(const [a,b] of shuffle([[n-k,n],[k,n+1],[1,n],[k,n-k],[k+1,n],[k,n+2],[n-1,n]])){if(out.length>=3)break;if(a<1||a>=b||b>12||seen.has(a+'/'+b))continue;seen.add(a+'/'+b);out.push([a,b,false])}
+  return shuffle(out).map(([a,b,ok])=>({html:FR(a,b),ok,label:FRS(a,b)}))}
+function qRead(){const n=[2,3,4,5,6,8][rnd(6)],k=1+rnd(n-1),sh=pick(keys(n),k);
+  return{ask:'색칠한 부분은 전체의 얼마일까요?',say:'색칠한 부분은 전체의 얼마일까요?',fig:rnd(2)?pie(n,sh):bar(n,sh),choices:fracChoices(k,n),
+    exp:`전체를 똑같이 <b>${n}조각</b>으로 나눈 것 중에서 <b>${k}조각</b>을 색칠했어요. 그래서 ${FR(k,n)} (${FRS(k,n)})이에요.`,expSay:`${n}조각 중에 ${k}조각을 색칠했으니까 ${FRS(k,n)}이에요.`}}
+function qEqual(){const n=[2,3,4][rnd(3)],P=rnd(2),mk=w=>P?pie(n,[],46,w):bar(n,[],w);
+  return{ask:'전체를 <b>똑같이</b> 나눈 것을 찾아요!',say:'전체를 똑같이 나눈 것을 찾아 보세요',fig:'',
+    choices:shuffle([{html:mk(null),ok:true},{html:mk(uneq(n)),ok:false},{html:mk(uneq(n)),ok:false}]),
+    exp:'분수는 전체를 <b>똑같은 크기로</b> 나누어야 해요. 조각의 크기가 모두 같은 것을 골라야 해요.',expSay:'조각 크기가 모두 같은 것이 똑같이 나눈 거예요.'}}
+function qName(){const n=3+rnd(6),k=1+rnd(n-1),w=rnd(2)?'분모':'분자',ans=w==='분모'?n:k;
+  return{ask:`${FR(k,n)} 에서 <b>${w}</b>는 무엇일까요?`,say:`${FRS(k,n)}에서 ${w}는 무엇일까요?`,fig:bar(n,keys(k)),
+    choices:shuffle([n,k,n+k]).map(v=>({html:String(v),ok:v===ans,label:String(v)})),
+    exp:`분수의 <b>아래 숫자</b>는 전체를 나눈 조각 수로 <b>분모</b>, <b>위 숫자</b>는 색칠한 조각 수로 <b>분자</b>라고 해요. ${FR(k,n)}의 ${w}는 <b>${ans}</b>예요.`,expSay:`아래 숫자가 분모, 위 숫자가 분자예요. ${w}는 ${ans}이에요.`}}
+function qPaint(){const n=[3,4,5,6,8][rnd(5)],k=1+rnd(n-1);
+  return{paint:1,k,n,ask:`${FR(k,n)} 만큼 색칠해 보세요`,say:`${FRS(k,n)}만큼 조각을 눌러서 색칠해 보세요`,fig:rnd(2)?pie(n,[],80,null,1):bar(n,[],null,1),
+    exp:`전체 <b>${n}조각</b> 중에서 <b>${k}조각</b>을 칠하면 ${FR(k,n)}이에요.`}}
+function qCompare(){
+  if(rnd(2)){const a=2+rnd(7);let b;do b=2+rnd(7);while(b===a);const big=Math.min(a,b);
+    return{ask:'더 큰 분수는 어느 것일까요?',say:'둘 중에 더 큰 분수를 골라 보세요',fig:'',choices:[a,b].map(d=>({html:FR(1,d)+bar(d,[0]),ok:d===big,label:FRS(1,d),cmp:1})),
+      exp:`똑같은 크기를 <b>더 많은 조각</b>으로 나눌수록 한 조각은 <b>작아져요</b>. 그래서 ${FR(1,big)} 이 더 커요.`,expSay:`조각이 많을수록 한 조각은 작아져요. 그래서 ${FRS(1,big)}이 더 커요.`}}
+  const n=3+rnd(6),a=1+rnd(n-1);let b;do b=1+rnd(n-1);while(b===a);const big=Math.max(a,b);
+  return{ask:'더 큰 분수는 어느 것일까요?',say:'둘 중에 더 큰 분수를 골라 보세요',fig:'',choices:[a,b].map(k=>({html:FR(k,n)+bar(n,keys(k)),ok:k===big,label:FRS(k,n),cmp:1})),
+    exp:`두 분수 모두 <b>${n}조각</b>으로 나누었어요. 조각 크기가 같으니까 <b>색칠한 조각이 더 많은</b> ${FR(big,n)} 이 더 커요.`,expSay:`조각 크기가 같으니까 조각이 더 많은 ${FRS(big,n)}이 더 커요.`}}
+function qLife(){const n=[2,3,4,6,8][rnd(5)],k=1+rnd(n-1);const S=[
+  {t:`피자 한 판을 <b>${n}명</b>이 똑같이 나누어 먹어요. 한 사람이 먹는 양은 전체의 얼마일까요?`,s:`피자 한 판을 ${n}명이 똑같이 나누어 먹으면, 한 사람은 전체의 얼마를 먹을까요?`,a:1,f:pie(n,[0]),e:`${n}명이 똑같이 나누면 ${n}조각 중에서 1조각씩 먹어요.`},
+  {t:`케이크를 똑같이 <b>${n}조각</b>으로 잘라서 <b>${k}조각</b>을 먹었어요. 먹은 양은 전체의 얼마일까요?`,s:`케이크를 똑같이 ${n}조각으로 잘라서 ${k}조각을 먹었어요. 먹은 양은 전체의 얼마일까요?`,a:k,f:pie(n,keys(k)),e:`${n}조각 중에서 ${k}조각을 먹었어요.`},
+  {t:`초콜릿 <b>${n}칸</b> 중에서 <b>${k}칸</b>을 동생에게 주었어요. 동생에게 준 것은 전체의 얼마일까요?`,s:`초콜릿 ${n}칸 중에서 ${k}칸을 동생에게 주었어요. 동생에게 준 것은 전체의 얼마일까요?`,a:k,f:bar(n,keys(k)),e:`${n}칸 중에서 ${k}칸을 주었어요.`},
+  {t:`색종이를 똑같이 <b>${n}칸</b>으로 접어서 <b>${k}칸</b>에 색칠했어요. 색칠한 부분은 전체의 얼마일까요?`,s:`색종이를 똑같이 ${n}칸으로 접어서 ${k}칸에 색칠했어요. 색칠한 부분은 전체의 얼마일까요?`,a:k,f:bar(n,keys(k)),e:`${n}칸 중에서 ${k}칸을 색칠했어요.`}][rnd(4)];
+  return{ask:S.t,say:S.s,fig:S.f,choices:fracChoices(S.a,n),exp:`${S.e} 그래서 ${FR(S.a,n)} 이에요.`,expSay:`${S.e} 그래서 ${FRS(S.a,n)}이에요.`}}
+const FTYPES={mix:[qRead,qEqual,qName,qPaint,qCompare,qLife],read:[qRead,qEqual,qName],paint:[qPaint],compare:[qCompare,qLife]};
+const PRAISE=['잘했어, 모현아!','최고야!','정답이야, 멋져!','우와, 똑똑해!'];
+const F_N=10;let fq=0,fRight=0,fCur=null,fDone=false,fTried=false;
+const fMode=seg('#fMode',()=>startFrac());
+function startFrac(){fq=0;fRight=0;nextFrac()}
+function nextFrac(){
+  if(fq>=F_N){const m=fRight>=8?'분수 박사 모현이!':fRight>=5?'잘했어요, 모현이!':'끝까지 해냈어요!';win(`${m} ${F_N}문제 중 ${fRight}개`,startFrac);return}
+  $('#robot').classList.remove('on');
+  const L=FTYPES[fMode()];fCur=L[rnd(L.length)]();fDone=false;fTried=false;
+  $('#fBoard').innerHTML=`<p class="tip" style="margin:0 0 8px">${fq+1} / ${F_N}번째 문제 · 맞힌 문제 ${fRight}개</p>
+    <p class="ask"><button class="say" aria-label="다시 듣기">🔊</button><span>${fCur.ask}</span></p>
+    <div class="ffig">${fCur.fig||''}</div>
+    ${fCur.paint?'<button class="btn fnext" id="fCheck">다 칠했어요!</button>':`<div class="choices">${fCur.choices.map((c,i)=>`<button class="ch${c.cmp?' cmp':''}" data-i="${i}" aria-label="${c.label||(i+1)+'번 그림'}">${c.html}</button>`).join('')}</div>`}
+    <div class="fexp" id="fExp"></div><button class="btn fnext" id="fNext" hidden>다음 문제 →</button>`;
+  speak(fCur.say)}
+function showExp(cls,html){const x=$('#fExp');x.className='fexp on '+cls;x.innerHTML=html}
+function fGood(){tone('good');const p=PRAISE[rnd(PRAISE.length)];robot(p);speak(p);showExp('good','정답! '+fCur.exp);$('#fNext').hidden=false}
+$('#fBoard').addEventListener('click',e=>{const B=$('#fBoard');
+  if(e.target.closest('.say'))return speak(fCur.say);
+  if(e.target.closest('#fNext')){fq++;nextFrac();return}
+  const cell=e.target.closest('.cell');
+  if(cell&&fCur.paint&&!fDone){cell.setAttribute('fill',cell.getAttribute('fill')===SH?EMP:SH);tone('pop');return}
+  if(e.target.closest('#fCheck')&&!fDone){const cnt=B.querySelectorAll(`.cell[fill="${SH}"]`).length;
+    if(cnt===fCur.k){fDone=true;if(!fTried)fRight++;$('#fCheck').hidden=true;fGood()}
+    else{fTried=true;tone('bad');showExp('bad',`${FR(fCur.k,fCur.n)} 만큼 칠하려면 ${fCur.n}조각 중에서 <b>${fCur.k}조각</b>을 칠해야 해요. 지금은 ${cnt}조각을 칠했어요. 다시 해 볼까요?`);
+      speak(`${fCur.k}조각을 칠해야 해요. 지금은 ${cnt}조각이에요. 다시 해 볼까요?`)}return}
+  const c=e.target.closest('.ch');if(!c||fDone||!fCur.choices)return;fDone=true;
+  if(fCur.choices[+c.dataset.i].ok){fRight++;c.classList.add('yes');fGood()}
+  else{$('#robot').classList.remove('on');c.classList.add('no');tone('bad');B.querySelector(`.ch[data-i="${fCur.choices.findIndex(x=>x.ok)}"]`).classList.add('yes');
+    showExp('bad','아쉬워요! '+fCur.exp);speak('아쉬워요. '+fCur.expSay);$('#fNext').hidden=false}});
+starts.frac=startFrac;
 
 route();
 }
