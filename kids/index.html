@@ -87,7 +87,7 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
 #run{touch-action:none;-webkit-user-select:none;user-select:none;color:#3a2a17}
 #run.game.on{display:block;position:fixed;inset:0;z-index:5;background:#1b2140;overflow:hidden}
 #r-app{position:relative;height:100vh;height:100dvh;width:min(100vw,calc(100dvh*9/16));margin:0 auto;overflow:hidden;background:#8fd3ff}
-#r-app canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#r-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 #r-app video{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 #run .ov{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;background:linear-gradient(#0000 0,#0005 70%)}
 #run .ov.on{display:flex}
@@ -107,7 +107,9 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
 #r-pbar.on{display:flex}
 #r-pbar button,#r-quit{font:inherit;font-size:17px;border:3px solid #3a2a17;border-radius:16px;background:#fff;color:#3a2a17;padding:8px 10px;min-height:48px;box-shadow:0 3px 0 #3a2a17;cursor:pointer}
 #r-quit{position:absolute;left:12px;bottom:78px;border-radius:999px;font-size:15px;opacity:.9}
-#r-start.on~#r-quit,#r-over.on~#r-quit,#r-calib.on~#r-quit{display:none}
+#r-start.on~#r-quit,#r-over.on~#r-quit,#r-calib.on~#r-quit,#r-face.on~#r-quit{display:none}
+#r-fc{width:min(190px,48vw);height:auto;aspect-ratio:1;border-radius:50%;border:4px solid #3a2a17;display:block;margin:10px auto 4px;background:#dff2ff}
+#run .rbtn[hidden]{display:none}
 /* 더하기 · 로봇 */
 .sum{font-size:clamp(56px,14vw,104px);line-height:1;text-align:center;margin:4px 0 8px;letter-spacing:2px}
 .sum b{font-weight:400;color:var(--coral)}
@@ -196,6 +198,16 @@ main{max-width:1100px;margin:0 auto;padding:8px max(4vw,16px) 40px}
         <h2 id="r-cT">카메라 준비 중…</h2>
         <p id="r-cP">잠깐만 기다려 주세요</p>
         <div class="rmeter"><i id="r-cM"></i></div>
+      </div></div>
+      <div class="ov" id="r-face"><div class="rcard">
+        <h2 id="r-fT">내 얼굴 찍기</h2>
+        <p id="r-fP">화면 가까이 와서 얼굴을 동그라미 안에 넣어요</p>
+        <canvas id="r-fc" width="240" height="240"></canvas>
+        <button class="rbtn" id="r-fShot">📸 찰칵 찍기</button>
+        <button class="rbtn" id="r-fOk" hidden>이 얼굴로 달릴래요!</button>
+        <button class="rbtn alt" id="r-fRe" hidden>다시 찍기</button>
+        <button class="rbtn alt" id="r-fSkip">토끼 얼굴로 할래요</button>
+        <p class="small">사진은 저장하지 않고 놀이하는 동안에만 써요.</p>
       </div></div>
       <div class="ov" id="r-over"><div class="rcard">
         <h2>끝! 정말 잘 달렸어요</h2>
@@ -419,8 +431,8 @@ function procPose(L){
   if(!L){body.present=false;body.pts=null;return}
   const vw=video.videoWidth,vh=video.videoHeight;
   const P=i=>({x:(1-L[i].x)*vw,y:L[i].y*vh,v:L[i].visibility??1});
-  const N=P(0),LS=P(11),RS=P(12),LW=P(15),RW=P(16),LE=P(13),RE=P(14);
-  body.pts={N,LS,RS,LW,RW,LE,RE,vw,vh};
+  const N=P(0),LS=P(11),RS=P(12),LW=P(15),RW=P(16),LE=P(13),RE=P(14),E7=P(7),E8=P(8);
+  body.pts={N,LS,RS,LW,RW,LE,RE,E7,E8,vw,vh};
   body.present=LS.v>.5&&RS.v>.5;
   if(!body.present)return;
   const sw=Math.max(vw*.04,Math.abs(RS.x-LS.x)),sy=(LS.y+RS.y)/2,cx=(LS.x+RS.x)/2/vw;
@@ -463,14 +475,38 @@ async function startCam(){
       const mk=d=>v.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:MODEL,delegate:d},runningMode:'VIDEO',numPoses:1});
       try{landmarker=await mk('GPU')}catch(e){landmarker=await mk('CPU')}
     }
-    useCam=true;base=null;calibT=0;calibSum=0;calibN=0;state='calib';
-    say('가운데 서서 차렷 해 주세요!',true);
+    useCam=true;openFace();
   }catch(e){
     $('#r-calib').classList.remove('on');$('#r-start').classList.add('on');
     err.textContent='카메라를 켜지 못했어요. 클로드 화면 안에서는 카메라가 막혀 있어요. 파일로 받은 꼬마 놀이터를 크롬에서 열면 카메라로 할 수 있어요. 지금은 “카메라 없이 해 보기”로 놀아요!';stopCam();err.style.display='block';
   }
 }
 let calibT=0,calibSum=0,calibN=0;
+/* 얼굴 찍기 */
+let faceImg=null,faceShot=null,faceCount=0;
+const fc=$('#r-fc'),fctx=fc.getContext('2d');
+const fbtn=(shot,ok)=>{$('#r-fShot').hidden=!shot;$('#r-fOk').hidden=!ok;$('#r-fRe').hidden=!ok};
+function openFace(){$('#r-calib').classList.remove('on');$('#r-face').classList.add('on');faceShot=null;faceCount=0;fbtn(1,0);
+  $('#r-fT').textContent='내 얼굴 찍기';$('#r-fP').textContent='화면 가까이 와서 얼굴을 동그라미 안에 넣어요';state='face';
+  say('토끼 얼굴에 내 얼굴을 넣어요! 동그라미 안에 얼굴을 보여 주세요',true)}
+function faceCrop(dst){const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;const p=body.pts;let cx=vw/2,cy=vh*.4,r=Math.min(vw,vh)*.25;
+  if(p&&p.N.v>.5){const ed=p.E7.v>.4&&p.E8.v>.4?Math.abs(p.E7.x-p.E8.x):0;r=Math.max(ed*.85,body.sw*.38,vh*.07);cx=p.N.x;cy=p.N.y-r*.12}
+  const g=dst.getContext('2d'),S=dst.width;g.save();g.clearRect(0,0,S,S);g.fillStyle='#dff2ff';g.fillRect(0,0,S,S);g.beginPath();g.arc(S/2,S/2,S/2,0,Math.PI*2);g.clip();
+  g.translate(S,0);g.scale(-1,1);g.drawImage(video,(vw-cx)-r,cy-r,2*r,2*r,0,0,S,S);g.restore()}
+function faceTick(dt){
+  if(faceShot){fctx.clearRect(0,0,240,240);fctx.drawImage(faceShot,0,0);return}
+  faceCrop(fc);
+  if(faceCount>0){faceCount-=dt;
+    if(faceCount<=0){faceShot=document.createElement('canvas');faceShot.width=faceShot.height=240;faceCrop(faceShot);tone('win');
+      say('찰칵! 멋진 얼굴이에요!',true);$('#r-fT').textContent='찰칵! 멋져요!';$('#r-fP').textContent='이 얼굴로 달려 볼까요?';fbtn(0,1)}
+    else{fctx.font='bold 120px Jua, sans-serif';fctx.textAlign='center';fctx.textBaseline='middle';fctx.lineWidth=14;fctx.strokeStyle='#3a2a17';
+      fctx.strokeText(Math.ceil(faceCount),120,124);fctx.fillStyle='#fff';fctx.fillText(Math.ceil(faceCount),120,124)}}}
+function goCalib(){$('#r-face').classList.remove('on');$('#r-calib').classList.add('on');$('#r-cM').style.width='0';
+  base=null;calibT=0;calibSum=0;calibN=0;state='calib';say('이제 뒤로 두세 걸음 가서, 가운데 서서 차렷 해 주세요!',true)}
+$('#r-fShot').onclick=()=>{faceCount=3;fbtn(0,0);tone('pop');say('셋, 둘, 하나',true)};
+$('#r-fRe').onclick=()=>{faceShot=null;fbtn(1,0);$('#r-fT').textContent='내 얼굴 찍기';$('#r-fP').textContent='동그라미 안에 얼굴을 넣어요'};
+$('#r-fOk').onclick=()=>{faceImg=faceShot;tone('good');goCalib()};
+$('#r-fSkip').onclick=()=>{faceImg=null;faceCount=0;goCalib()};
 function calib(dt){
   if(body.present){calibT+=dt;calibSum+=body.sy;calibN++;$('#r-cT').textContent='좋아요! 그대로 차렷!';$('#r-cP').textContent='가운데 서서 가만히 있어요'}
   else{calibT=Math.max(0,calibT-dt);$('#r-cT').textContent='몸이 안 보여요';$('#r-cP').textContent='뒤로 한두 걸음 가서 어깨가 보이게 서 주세요'}
@@ -592,10 +628,13 @@ function bunny(x,g,s,duck,jh,arms){
   const hcy=bcy-by-20*s*(duck?.8:1);
   if(!duck){[-1,1].forEach(k=>{ell(x+k*11*s,hcy-36*s,8*s,22*s,k*.15,'#fff',INK,3*s);ell(x+k*11*s,hcy-34*s,4*s,15*s,k*.15,'#ffb3c1')})}
   else{[-1,1].forEach(k=>{ell(x+k*30*s,hcy-6*s,7*s,20*s,k*1.2,'#fff',INK,3*s);ell(x+k*30*s,hcy-6*s,3.5*s,13*s,k*1.2,'#ffb3c1')})}
+  if(faceImg){const fr=30*s;ell(x,hcy,fr+2*s,fr+2*s,0,'#fff',INK,3*s);ctx.save();ctx.beginPath();ctx.arc(x,hcy,fr,0,Math.PI*2);ctx.clip();
+    ctx.drawImage(faceImg,x-fr,hcy-fr,fr*2,fr*2);ctx.restore();ell(x,hcy,fr,fr,0,null,INK,3*s)}
+  else{
   ell(x,hcy,25*s,23*s,0,'#fff',INK,3*s);
   ell(x-9*s,hcy-2*s,3.3*s,4*s,0,INK);ell(x+9*s,hcy-2*s,3.3*s,4*s,0,INK);
   ell(x-16*s,hcy+7*s,5*s,3*s,0,'#ffb3c1');ell(x+16*s,hcy+7*s,5*s,3*s,0,'#ffb3c1');
-  ctx.strokeStyle=INK;ctx.lineWidth=2.4*s;ctx.lineCap='round';ctx.beginPath();ctx.arc(x,hcy+5*s,5*s,.2,Math.PI-.2);ctx.stroke();
+  ctx.strokeStyle=INK;ctx.lineWidth=2.4*s;ctx.lineCap='round';ctx.beginPath();ctx.arc(x,hcy+5*s,5*s,.2,Math.PI-.2);ctx.stroke();}
   const shY=bcy-by*.55;
   [-1,1].forEach((k,i)=>{const v=arms[i];let n=Math.hypot(v[0],v[1])||1;const len=Math.min(1.4,Math.max(.6,n));
     const sx=x+k*20*s,ex=sx+v[0]/n*len*22*s,ey=shY+v[1]/n*len*22*s;
@@ -711,7 +750,7 @@ cv.addEventListener('pointerup',e=>{if(!sw0||state!=='play'||useCam)return;const
 
 const runEl=document.getElementById('run');
 function stopCam(){try{if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null}}catch(e){}useCam=false;base=null;body.present=false;body.pts=null}
-function toMenu(){state='menu';try{speechSynthesis.cancel()}catch(e){}['r-calib','r-over'].forEach(id=>document.getElementById(id).classList.remove('on'));$('#r-start').classList.add('on');$('#r-pbar').classList.remove('on')}
+function toMenu(){state='menu';try{speechSynthesis.cancel()}catch(e){}['r-calib','r-over','r-face'].forEach(id=>document.getElementById(id).classList.remove('on'));$('#r-start').classList.add('on');$('#r-pbar').classList.remove('on')}
 function chapter(){const on=location.hash==='#run';document.body.style.overflow=on?'hidden':'';if(!on&&(state!=='menu'||useCam)){stopCam();toMenu()}if(on)resize()}
 window.addEventListener('hashchange',chapter);chapter();
 $('#r-quit').onclick=()=>{stopCam();toMenu()};
@@ -721,6 +760,7 @@ function loop(now){
   if(!runEl.classList.contains('on')){requestAnimationFrame(loop);return}
   if(useCam&&landmarker&&video.readyState>=2&&now-lastDet>40){lastDet=now;try{const r=landmarker.detectForVideo(video,now);procPose(r.landmarks&&r.landmarks[0])}catch(e){}}
   if(state==='calib')calib(dt);
+  if(state==='face')faceTick(dt);
   update(dt);draw();requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
